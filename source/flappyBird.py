@@ -35,7 +35,7 @@ COLUMNIMG = pygame.transform.scale(COLUMNIMG, (COLUMNWIDTH, COLUMNHEIGHT))
 
 def main():
     bird = Bird()
-    col = Column()
+    col = Columns()
     while True:
         mouseClick = False
         for event in pygame.event.get():
@@ -51,6 +51,7 @@ def main():
         bird.update(mouseClick)
         
         col.draw()
+        col.update()
         
         pygame.display.update()
         fpsClock.tick(FPS)
@@ -73,7 +74,7 @@ class Bird():
         if mouseClick == True:
             self.speed = SPEEDFLY
             
-class Column():
+class Columns():
     def __init__(self):
         self.width = COLUMNWIDTH
         self.height = COLUMNHEIGHT
@@ -84,7 +85,7 @@ class Column():
         self.ls = []
         
         for i in range(3):
-            x = i * self.distance
+            x = WINDOWWIDTH + i * self.distance
             y = random.randrange(60, WINDOWHEIGHT - self.blank - 60, 20)
             self.ls.append([x, y])
             
@@ -92,5 +93,15 @@ class Column():
         for i in range(3):
             DISPLAYSURF.blit(self.surface, (self.ls[i][0], self.ls[i][1] - self.height))
             DISPLAYSURF.blit(self.surface, (self.ls[i][0], self.ls[i][1] + self.blank))
+            
+    def update(self):
+        for i in range(3):
+            self.ls[i][0] -= self.speed        
+        if self.ls[0][0] < -self.width:
+            self.ls.pop(0)
+            x = self.ls[1][0] + self.distance
+            y = random.randrange(60, WINDOWHEIGHT - self.blank - 60, 10)
+            self.ls.append([x, y])
+            
 if __name__ == '__main__':
     main()
