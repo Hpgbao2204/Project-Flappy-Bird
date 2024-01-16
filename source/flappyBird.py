@@ -44,6 +44,9 @@ def main():
                 sys.exit()
             if event.type == MOUSEBUTTONDOWN:
                 mouseClick = True
+            if isGameOver(bird, col) == True:
+                pygame.quit()
+                sys.exit()
                 
         DISPLAYSURF.blit(BACKGROUND, (0, 0))
         
@@ -56,6 +59,22 @@ def main():
         pygame.display.update()
         fpsClock.tick(FPS)
 
+def rectCollision(rect1, rect2):
+        if rect1[0] <= rect2[0]+rect2[2] and rect2[0] <= rect1[0]+rect1[2] and rect1[1] <= rect2[1]+rect2[3] and rect2[1] <= rect1[1]+rect1[3]:
+            return True
+        return False       
+    
+def isGameOver(bird, columns):
+    for i in range(3):
+        rectBird = [bird.x, bird.y, bird.width, bird.height]
+        rectColumn1 = [columns.ls[i][0], columns.ls[i][1] - columns.height, columns.width, columns.height]
+        rectColumn2 = [columns.ls[i][0], columns.ls[i][1] + columns.blank, columns.width, columns.height]
+        if rectCollision(rectBird, rectColumn1) == True or rectCollision(rectBird, rectColumn2):
+            return True
+    
+    if bird.y + bird.height < 0 or bird.y + bird.height > WINDOWHEIGHT:
+        return True
+    return False
 class Bird():
     def __init__ (self):
         self.width = BIRDWIDTH
@@ -102,6 +121,9 @@ class Columns():
             x = self.ls[1][0] + self.distance
             y = random.randrange(60, WINDOWHEIGHT - self.blank - 60, 10)
             self.ls.append([x, y])
+    
+    
+            
             
 if __name__ == '__main__':
     main()
