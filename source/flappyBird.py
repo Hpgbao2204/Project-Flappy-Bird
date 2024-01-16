@@ -35,30 +35,13 @@ COLUMNIMG = pygame.transform.scale(COLUMNIMG, (COLUMNWIDTH, COLUMNHEIGHT))
 
 def main():
     bird = Bird()
-    col = Columns()
+    columns = Columns()
+    score = Score()
     while True:
-        mouseClick = False
-        for event in pygame.event.get():
-            if event.type == QUIT:
-                pygame.quit()
-                sys.exit()
-            if event.type == MOUSEBUTTONDOWN:
-                mouseClick = True
-            if isGameOver(bird, col) == True:
-                pygame.quit()
-                sys.exit()
-                
-        DISPLAYSURF.blit(BACKGROUND, (0, 0))
+        gameStart(bird)
+        gamePlay(bird, columns, score)
+        gameOver(bird, columns, score) 
         
-        bird.draw()
-        bird.update(mouseClick)
-        
-        col.draw()
-        col.update()
-        
-        pygame.display.update()
-        fpsClock.tick(FPS)
-
 def rectCollision(rect1, rect2):
         if rect1[0] <= rect2[0]+rect2[2] and rect2[0] <= rect1[0]+rect1[2] and rect1[1] <= rect2[1]+rect2[3] and rect2[1] <= rect1[1]+rect1[3]:
             return True
@@ -75,6 +58,94 @@ def isGameOver(bird, columns):
     if bird.y + bird.height < 0 or bird.y + bird.height > WINDOWHEIGHT:
         return True
     return False
+
+def gamePlay(bird, columns, score):
+    bird.__init__()
+    bird.speed = SPEEDFLY
+    columns.__init__()
+    score.__init__()
+    while True:
+        mouseClick = False
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == MOUSEBUTTONDOWN:
+                mouseClick = True 
+        
+        DISPLAYSURF.blit(BACKGROUND, (0, 0))
+        columns.draw()
+        columns.update()
+        bird.draw()
+        bird.update(mouseClick)
+        score.draw()
+        score.update(bird, columns)
+        
+        if isGameOver(bird, columns) == True:
+            return
+        
+        pygame.display.update()
+        fpsClock.tick(FPS)
+
+def gameStart(bird):
+    bird.__init__()
+    
+    font = pygame.font.SysFont('consolas', 60)
+    headingSurface = font.render('Gia Bao', True, (255, 0, 0))        
+    headingSize = headingSurface.get_size()
+    
+    font = pygame.font.SysFont('consolas', 20)
+    commentSurface = font.render('Click to start', True, (0, 0 , 0))
+    commentSize = commentSurface.get_size()
+    
+    while True:
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == MOUSEBUTTONDOWN:
+                return
+            
+        DISPLAYSURF.blit(BACKGROUND, (0, 0))
+        bird.draw()
+        DISPLAYSURF.blit(headingSurface, (int((WINDOWWIDTH - headingSize[0]) / 2), 100))
+        DISPLAYSURF.blit(commentSurface, (int((WINDOWWIDTH - commentSize[0]) / 2), 500))
+        
+        pygame.display.update()
+        fpsClock.tick(FPS)
+        
+def gameOver(bird, columns, score):
+    font = pygame.font.SysFont('consolas', 60)
+    headingSurface = font.render('game over', True, (255, 0, 0))        
+    headingSize = headingSurface.get_size()
+    
+    font = pygame.font.SysFont('consolas', 20)
+    commentSurface = font.render('Press "space" to replay ', True, (0, 0 , 0))
+    commentSize = commentSurface.get_size()
+    
+    font = pygame.font.SysFont('consolas', 60)
+    scoreSurface = font.render('Score: ' + str(score.score), True, (255, 0, 0))        
+    scoreSize = headingSurface.get_size()
+    
+    while True:
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == KEYUP:
+                if event.key == K_SPACE:
+                    return
+                
+        DISPLAYSURF.blit(BACKGROUND, (0, 0))
+        columns.draw()
+        bird.draw()
+        DISPLAYSURF.blit(headingSurface, (int((WINDOWWIDTH - headingSize[0]) / 2), 100))
+        DISPLAYSURF.blit(commentSurface, (int((WINDOWWIDTH - commentSize[0]) / 2), 500))
+        DISPLAYSURF.blit(scoreSurface, (int((WINDOWWIDTH - scoreSize[0]) / 2), 160))
+        
+        pygame.display.update()
+        fpsClock.tick(FPS)
+        
 class Bird():
     def __init__ (self):
         self.width = BIRDWIDTH
@@ -82,17 +153,17 @@ class Bird():
         self.x = (WINDOWWIDTH - self.width) / 2
         self.y = (WINDOWHEIGHT - self.height) / 2
         self.speed = 0
-        self.suface = BIRDIMG
+        self.surface = BIRDIMG
         
     def draw(self):
-        DISPLAYSURF.blit(self.suface, (int(self.x), int(self.y)))
+        DISPLAYSURF.blit(self.surface, (int(self.x), int(self.y)))
         
     def update(self, mouseClick):
         self.y += self.speed + 0.5 * G
         self.speed += G
         if mouseClick == True:
             self.speed = SPEEDFLY
-            
+                        
 class Columns():
     def __init__(self):
         self.width = COLUMNWIDTH
@@ -120,10 +191,31 @@ class Columns():
             self.ls.pop(0)
             x = self.ls[1][0] + self.distance
             y = random.randrange(60, WINDOWHEIGHT - self.blank - 60, 10)
-            self.ls.append([x, y])
+            self.ls.append([x, y])    
+class Score():
+    def __init__(self):
+        self.score = 0
+        self.addScore = True
     
+    def draw(self):
+        font = pygame.font.SysFont('consolas', 40)
+        scoresurface = font.render(str(self.score), True, (0, 0, 0))
+        textSize = scoresurface.get_size()
+        DISPLAYSURF.blit(scoresurface, (int((WINDOWWIDTH - textSize[0]) / 2 ), 100))
     
-            
-            
+    def update(self, bird, columns):
+        collision = False
+        for i in range (3):
+            rectColumn = [columns.ls[i][0] + columns.width, columns.ls[i][1], 1, columns.blank]            
+            rectBird = [bird.x, bird.y, bird.width, bird.height]
+            if rectCollision(rectBird, rectColumn) == True:
+                collision = True
+                break
+        if collision == True:
+            if self.addScore == True:
+                self.score += 1
+            self.addScore = False
+        else:
+            self.addScore = True
 if __name__ == '__main__':
     main()
